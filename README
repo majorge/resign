@@ -1,0 +1,1 @@
+Resign apps using a combination of unarchive CLI (unar), resign Ruby script from http://afp548.com/2012/06/05/re-signining-ios-apps/ but modified to pass codesign the generated ENTITLEMENTS.plist. Without this change, errors like "application loader the signature was invalid, contains disallowed entitlements" would appear in Application Loader.
