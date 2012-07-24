@@ -1,18 +1,31 @@
 require 'optparse'
 
 options = {}
-OptionParser.new do |opts|
+
+optparse = OptionParser.new do |opts|
   opts.banner = "Usage: resign-wrapper.rb [options]"
 
   opts.on("-d", "--directory [dir path]", "Directory containing IPAs to resign") do |d|
     options[:directory] = d
   end
-
-  opts.on("-p", "--prov_profile_path [provisioning profile path", "Path to provisioning profile to resign with") do |d|
-    options[:prov_profile_path] = d
+  opts.on("-p", "--prov_profile_path [provisioning profile path", "Path to provisioning profile to resign with") do |p|
+    options[:prov_profile_path] = p
   end
-  
 end.parse!
+
+begin                                                                                                                                                                                                             
+  mandatory = [:directory, :prov_profile_path]                     # Enforce the presence of                                                                                                                                                
+  missing = mandatory.select{ |param| options[param].nil? }        # the -t and -f switches                                                                                                                        
+  if not missing.empty?                                            #                                                                                                                                             
+    puts "Missing options: #{missing.join(', ')}"                  #                                                                                                                                             
+    puts optparse                                                  #                                                                                                                                             
+    exit                                                           #                                                                                                                                             
+  end                                                              #                                                                                                                                            
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument  #                                                                                                                                                
+  puts $!.to_s                                                     # Friendly output when parsing fails
+  puts optparse                                                    # 
+  exit                                                             # 
+end
 
 dir = File.expand_path(options[:directory])
 apps = Dir.foreach(dir) do |file|
@@ -20,10 +33,11 @@ apps = Dir.foreach(dir) do |file|
 
   system("./unar -force-overwrite \"#{dir}/#{file}\"")
 
-  puts Dir.glob("Payload/*.app") {|i| system("./resign.rb --prov_profile_path #{options[:prov_profile_path]} --app_path \"#{File.expand_path(i)}\" --developerid \"iPhone Distribution: Mallinckrodt, Inc.\"") }
+  Dir.glob("Payload/*.app") do |i|
+    system("./resign.rb --prov_profile_path #{options[:prov_profile_path]} --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"iPhone Distribution: Mallinckrodt, Inc.\"")
+  end
   
   Dir.glob("Payload/*.app") do |p|
-#    File.chmod(777, p)
     system("rm -rf \"#{File.expand_path(p)}\"")
   end
 end

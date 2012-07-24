@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "base64"
+require 'base64'
 require 'openssl'
 require 'base64'
 require 'cgi'
@@ -78,11 +78,14 @@ prov_profile_path=nil
 #app_path is the posix path to the application bundle to sign
 app_path=nil
 
+app_name = nil
+
 #setup the options
 opts = GetoptLong.new(
     [ '--prov_profile_path', '-p', GetoptLong::REQUIRED_ARGUMENT ],
     [ '--app_path', '-a', GetoptLong::REQUIRED_ARGUMENT ],
-    [ '--developerid', '-d', GetoptLong::REQUIRED_ARGUMENT ]
+    [ '--developerid', '-d', GetoptLong::REQUIRED_ARGUMENT ],
+    [ '--app_name', '-n', GetoptLong::REQUIRED_ARGUMENT ]
   )
   
 opts.each do |opt, arg|
@@ -90,9 +93,11 @@ opts.each do |opt, arg|
     when '--prov_profile_path'
       prov_profile_path=arg
      when '--app_path'
-        app_path = arg
+      app_path = arg
     when '--developerid'
-       dev_id = arg
+      dev_id = arg
+    when '--app_name'
+      app_name = arg
   end
 end
 
@@ -201,9 +206,10 @@ Dir.mkdir(newFolder)
 Dir.mkdir("#{newFolder}/Payload")
 
 #Get the app name (without extension) and create a folder with the same name
-appName=Pathname.new(app_path).basename.sub(".app","")
+#appName=Pathname.new(app_path).basename.sub(".app","")
 File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{appName}.ipa\" Payload")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_name}\" Payload && rm -rf Payload")
+#system("rm -rf Payload")
