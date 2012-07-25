@@ -169,6 +169,9 @@ file_data=File.read(info_plist_path)
 info_plist=Plist::parse_xml(file_data)
 info_plist['CFBundleIdentifier']=app_id
 
+#update version number
+info_plist['CFBundleShortVersionString'] += '.1'
+
 $stderr.puts "   Saving updated Info.plist and Entitlements to app bundle..."
 info_plist.save_plist info_plist_path
 entitlements.save_plist("#{app_path}/Entitlements.plist")
