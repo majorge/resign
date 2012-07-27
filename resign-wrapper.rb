@@ -37,7 +37,7 @@ apps = Dir.foreach(dir) do |file|
   system("./unar -force-overwrite \"#{dir}/#{file}\"")
 
   Dir.glob("Payload/*.app") do |i|
-    system("./resign.rb --prov_profile_path #{options[:prov_profile_path]} --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")
+    system("./resign.rb --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")
   end
   
   Dir.glob("Payload/*.app") do |p|
