@@ -161,16 +161,13 @@ info_plist_path="#{app_path}/Info.plist"
 $stderr.puts "   Converting Info.plist from binary to text..."
 system("plutil -convert xml1 \"#{info_plist_path}\"")
 
-#Read in the plist file, put into an array, and then change the App ID
-# this is so that the bundle ID will match the app id in the provisioning
-#profile.  We then save it out with help from the plist library.
-$stderr.puts "   Updating Info.plist with new bundle id of #{app_id}..."
+#Read in the plist file, put into an array. We then save it out with help from the plist library.
 file_data=File.read(info_plist_path)
 info_plist=Plist::parse_xml(file_data)
-info_plist['CFBundleIdentifier']=app_id
 
 #update version number
-info_plist['CFBundleShortVersionString'] += '.1'
+info_plist['CFBundleVersion'] += '.1'
+$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleVersion']}..."
 
 $stderr.puts "   Saving updated Info.plist and Entitlements to app bundle..."
 info_plist.save_plist info_plist_path
