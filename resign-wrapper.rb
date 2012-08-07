@@ -30,14 +30,16 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   exit
 end
 
+script_path = File.expand_path(File.dirname(__FILE__))
+puts script_path
 dir = File.expand_path(options[:directory])
 apps = Dir.foreach(dir) do |file|
   next if not file =~ /.*\.ipa/i
 
-  system("./unar -force-overwrite \"#{dir}/#{file}\"")
+  system("\"#{script_path}/unar\" -force-overwrite \"#{dir}/#{file}\"")
 
   Dir.glob("Payload/*.app") do |i|
-    system("./resign.rb --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")
+    system("\"#{script_path}/resign.rb\" --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")
   end
   
   Dir.glob("Payload/*.app") do |p|
