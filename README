@@ -1,1 +1,5 @@
 Resign apps using a combination of unarchive CLI (unar), resign Ruby script from http://afp548.com/2012/06/05/re-signining-ios-apps/ but modified to pass codesign the generated ENTITLEMENTS.plist. Without this change, errors like "application loader the signature was invalid, contains disallowed entitlements" would appear in Application Loader.
+
+ruby resign.rb -p Exalgo.mobileprovision  -a Exalgo.app  -d "iPhone Distribution: Mallinckrodt, Inc." -n Exalgo.ipa
+
+Make sure Xcode Command Line Tools are installed on the machine you're resigning from. If not errors like "object file format unrecognized, invalid or unsuitable" will appear.
