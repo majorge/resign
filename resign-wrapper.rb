@@ -36,7 +36,7 @@ dir = File.expand_path(options[:directory])
 apps = Dir.foreach(dir) do |file|
   next if not file =~ /.*\.ipa/i
 
-  system("\"#{script_path}/unar\" -force-overwrite \"#{dir}/#{file}\"")
+  system("\"#{script_path}/unar\" -force-overwrite \"#{dir}/#{file}\" > /dev/null")
 
   Dir.glob("Payload/*.app") do |i|
     system("\"#{script_path}/resign.rb\" --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")

@@ -166,8 +166,23 @@ file_data=File.read(info_plist_path)
 info_plist=Plist::parse_xml(file_data)
 
 #update version number
-info_plist['CFBundleVersion'] += '.1'
+def new_version_number(version_number)
+  version_parts = version_number.split(".")
+  version_parts[version_parts.length-1] = (version_parts.last.to_i + 1).to_s
+  version_parts.join(".")
+end
+
+info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
 $stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleVersion']}..."
+
+#change bundle id to match provisioning profile
+#TODO: actually lookup the provisioning profile bundle id
+original_CFBundleIdentifier = info_plist['CFBundleIdentifier']
+new_CFBundleIdentifier = "com.mallinckrodt." + original_CFBundleIdentifier.split(".").last
+if original_CFBundleIdentifier != new_CFBundleIdentifier then
+  $stderr.puts "  Updating CFBundleIdentifier from #{original_CFBundleIdentifier} to #{new_CFBundleIdentifier}..."
+  info_plist['CFBundleIdentifier'] = new_CFBundleIdentifier
+end
 
 $stderr.puts "   Saving updated Info.plist and Entitlements to app bundle..."
 info_plist.save_plist info_plist_path
@@ -188,7 +203,8 @@ $stderr.puts "codesigning returned #{result}"
 throw "Codesigning failed" if result==false
 
 app_folder=Pathname.new(app_path).dirname.to_s
-newFolder="#{app_folder}/SignedApp"
+newFolder="#{app_folder}/#{app_name.gsub(".ipa", "")}"
+$stderr.puts newFolder
 
 #we add the .app into a Payload folder and then zip it 
 #up with the extension .ipa so it can easiy be added to iTunes
@@ -197,7 +213,7 @@ newFolder="#{app_folder}/SignedApp"
 
 i=1
 while (File.exists? newFolder)
-    newFolder="#{app_folder}/SignedApp"+"-"+i.to_s
+    newFolder="#{app_folder}/#{app_name.gsub(".ipa", "")}"+"-"+i.to_s
     i+=1
 end
 
@@ -211,5 +227,4 @@ File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_name}\" Payload && rm -rf Payload")
-#system("rm -rf Payload")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_name}\" Payload > /dev/null && rm -rf Payload")
