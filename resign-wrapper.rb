@@ -31,8 +31,8 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
 end
 
 script_path = File.expand_path(File.dirname(__FILE__))
-puts script_path
 dir = File.expand_path(options[:directory])
+
 apps = Dir.foreach(dir) do |file|
   next if not file =~ /.*\.ipa/i
 

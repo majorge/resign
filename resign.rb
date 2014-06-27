@@ -172,8 +172,10 @@ def new_version_number(version_number)
   version_parts.join(".")
 end
 
+new_version = new_version_number(info_plist['CFBundleShortVersionString'])
 info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
-$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleVersion']}..."
+info_plist['CFBundleShortVersionString'] = new_version
+$stderr.puts "   Updating Info.plist with new bundle version of #{new_version}..."
 
 #change bundle id to match provisioning profile
 #TODO: actually lookup the provisioning profile bundle id
@@ -222,9 +224,9 @@ Dir.mkdir(newFolder)
 Dir.mkdir("#{newFolder}/Payload")
 
 #Get the app name (without extension) and create a folder with the same name
-#appName=Pathname.new(app_path).basename.sub(".app","")
+app_bundle_name=Pathname.new(app_path).basename.sub(".app","")
 File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_name}\" Payload > /dev/null && rm -rf Payload")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{new_version} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null && rm -rf Payload")
