@@ -167,15 +167,16 @@ info_plist=Plist::parse_xml(file_data)
 
 #update version number
 def new_version_number(version_number)
+  if version_number.nil? then return version_number end
+	
   version_parts = version_number.split(".")
   version_parts[version_parts.length-1] = (version_parts.last.to_i + 1).to_s
   version_parts.join(".")
 end
 
-new_version = new_version_number(info_plist['CFBundleShortVersionString'])
 info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
-info_plist['CFBundleShortVersionString'] = new_version
-$stderr.puts "   Updating Info.plist with new bundle version of #{new_version}..."
+info_plist['CFBundleShortVersionString'] = new_version_number(info_plist['CFBundleShortVersionString'])
+$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleShortVersionString']}..."
 
 #change bundle id to match provisioning profile
 #TODO: actually lookup the provisioning profile bundle id
@@ -229,4 +230,4 @@ File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{new_version} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null && rm -rf Payload")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null && rm -rf Payload")
