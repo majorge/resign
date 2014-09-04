@@ -44,18 +44,19 @@ throw "file #{prov_profile_path} does not exist" if !File.exists?(prov_profile_p
   
 
 info_plist_path="#{app_path}/Info.plist"
-$stderr.puts "   Converting Info.plist from binary to text..."
+#$stderr.puts "   Converting Info.plist from binary to text..."
 system("plutil -convert xml1 \"#{info_plist_path}\"")
 
 #Read in the plist file, put into an array. We then save it out with help from the plist library.
 file_data=File.read(info_plist_path)
 info_plist=Plist::parse_xml(file_data)
 
-#update version number
+# ***** update version number ******
+
 #info_plist['CFBundleVersion'] += '.1'
 #$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleVersion']}..."
 
-#update bundle ID
+# ****** update bundle ID **********
 bundleid = info_plist['CFBundleIdentifier']
 #$stderr.puts "   Current Bundle Identifier #{bundleid}..."
 
@@ -64,4 +65,14 @@ matches = /^com\.mallinckrodt\..*$/.match(bundleid)
 
 #bundleid.split(".").each{|s| puts s}
 
-$stderr.puts "com.mallinckrodt." + bundleid.split(".").last
+#$stdout.puts "com.mallinckrodt." + bundleid.split(".").last
+
+
+# ******* icons *******
+
+#$stdout.puts File.new("#{app_path}AppIcon.png")
+info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
+	full_path= "#{app_path}#{file}~ipad.png"
+	exists = File.exists?(full_path)
+	$stdout.puts "#{full_path} #{exists}"
+}
