@@ -75,4 +75,5 @@ info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].eac
 	full_path= "#{app_path}#{file}~ipad.png"
 	exists = File.exists?(full_path)
 	$stdout.puts "#{full_path} #{exists}"
+	File.cp("#{full_path}", ".")
 }

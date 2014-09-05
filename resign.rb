@@ -230,4 +230,12 @@ File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null && rm -rf Payload")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
+
+#extract icons
+info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
+	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}~ipad.png"
+	File.cp("#{full_path}", "#{newFolder}")
+}
+
+system("pushd \"#{newFolder}\" && rm -rf Payload")
