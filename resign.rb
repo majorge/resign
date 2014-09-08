@@ -223,14 +223,11 @@ end
 #create the new folder and a payload folder
 Dir.mkdir(newFolder)
 Dir.mkdir("#{newFolder}/Payload")
-
-#Get the app name (without extension) and create a folder with the same name
-app_bundle_name=Pathname.new(app_path).basename.sub(".app","")
 File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{app_bundle_name}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
+system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
 
 #extract icons
 info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
