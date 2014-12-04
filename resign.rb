@@ -232,7 +232,9 @@ system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDispla
 #extract icons
 info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
 	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}~ipad.png"
-	File.cp("#{full_path}", "#{newFolder}")
+	if File.exists?(full_path) then
+		File.cp("#{full_path}", "#{newFolder}")
+	end
 }
 
 system("pushd \"#{newFolder}\" && rm -rf Payload")
