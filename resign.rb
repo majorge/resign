@@ -230,10 +230,19 @@ File.move(app_path,"#{newFolder}/Payload")
 system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
 
 #extract icons
-info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
-	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}~ipad.png"
+iPad = info_plist.has_key?('CFBundleIcons~ipad')
+if iPad then iPad_string = '~ipad' end
+info_plist["CFBundleIcons#{iPad_string}"]['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
+	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png"
+	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png"
+
 	if File.exists?(full_path) then
 		File.cp("#{full_path}", "#{newFolder}")
+	elsif File.exists?(shorter_path) then
+		File.cp("#{shorter_path}", "#{newFolder}")
+	else
+		puts "File #{file} could not be found"
+		File.cp("#{file}*", "#{newFolder}")
 	end
 }
 
