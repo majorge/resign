@@ -199,8 +199,8 @@ $stderr.puts "   Moving provisioning profile into app..."
 File.copy(prov_profile_path,"#{app_path}/embedded.mobileprovision")
 
 #now we sign the whole she-bang using the info provided
-$stderr.puts "running /usr/bin/codesign -f -s \"#{dev_id}\" --resource-rules=\"#{app_path}/ResourceRules.plist\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\""
-result=system("/usr/bin/codesign -f -s \"#{dev_id}\" --resource-rules=\"#{app_path}/ResourceRules.plist\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\"")
+$stderr.puts "running /usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\""
+result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\"")
 
 $stderr.puts "codesigning returned #{result}"
 throw "Codesigning failed" if result==false
