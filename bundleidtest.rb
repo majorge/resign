@@ -70,7 +70,6 @@ matches = /^com\.mallinckrodt\..*$/.match(bundleid)
 
 # ******* icons *******
 
-#$stdout.puts File.new("#{app_path}AppIcon.png")
 info_plist['CFBundleIcons~ipad']['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
 	full_path= "#{app_path}#{file}~ipad.png"
 	exists = File.exists?(full_path)
