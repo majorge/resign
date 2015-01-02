@@ -233,16 +233,19 @@ system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDispla
 iPad = info_plist.has_key?('CFBundleIcons~ipad')
 if iPad then iPad_string = '~ipad' end
 info_plist["CFBundleIcons#{iPad_string}"]['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
-	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png"
-	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png"
+	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png" #this .png might not be necessary in all cases...what to do?
+	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png" #ditto, might not need to add.png
 
 	if File.exists?(full_path) then
 		File.cp("#{full_path}", "#{newFolder}")
 	elsif File.exists?(shorter_path) then
 		File.cp("#{shorter_path}", "#{newFolder}")
 	else
-		puts "File #{file} could not be found"
-		File.cp("#{file}*", "#{newFolder}")
+		puts "File #{file} could not be found using #{full_path} or #{shorter_path}"
+		#File.cp("#{file}*", "#{newFolder}")
+		Dir.glob("#{newFolder}/Payload/#{Pathname.new(app_path).basename}/*#{file}*").each{ |file|
+			File.cp(file, "#{newFolder}")
+		}
 	end
 }
 
