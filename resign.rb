@@ -175,8 +175,11 @@ def new_version_number(version_number)
 end
 
 info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
-info_plist['CFBundleShortVersionString'] = new_version_number(info_plist['CFBundleShortVersionString'])
-$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleShortVersionString']}..."
+
+if info_plist.has_key?('CFBundleShortVersionString') then
+	info_plist['CFBundleShortVersionString'] = new_version_number(info_plist['CFBundleShortVersionString'])
+	$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleShortVersionString']}..."
+end
 
 #change bundle id to match provisioning profile
 #TODO: actually lookup the provisioning profile bundle id
@@ -231,7 +234,13 @@ system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDispla
 
 #extract icons
 iPad = info_plist.has_key?('CFBundleIcons~ipad')
-if iPad then iPad_string = '~ipad' end
+no_platform = info_plist.has_key?('CFBundleIconFiles')
+if no_platform then
+	iPad_string = ""
+elsif iPad then 
+	iPad_string = '~ipad' 
+end
+
 info_plist["CFBundleIcons#{iPad_string}"]['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
 	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png" #this .png might not be necessary in all cases...what to do?
 	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png" #ditto, might not need to add.png
