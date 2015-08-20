@@ -63,7 +63,7 @@ def find_matching_identities (inCertificateSubjects)
                 #we add it to our array
                 if (label==certSubject) then
                     identity_labels.push certSubject
-                    $stderr.puts "Matched #{label}"
+#                    $stderr.puts "Matched #{label}"
                 end
             end
         }
@@ -101,14 +101,14 @@ opts.each do |opt, arg|
   end
 end
 
-
+$stderr.puts "******** Starting resign of #{app_name} ********"
 
 throw "file #{prov_profile_path} does not exist" if !File.exists?(prov_profile_path)
 
 #read in the signed provisioning profile from disk and extract plist.
 #we don't care who signed it.
 
-$stderr.puts "   Reading in provisioning profile..."
+#$stderr.puts "   Reading in provisioning profile..."
 signedData=File.read(prov_profile_path)
 r = Plist::parse_xml(unwrap_signed_data(signedData))
 
@@ -142,23 +142,28 @@ certificatesArray.each { |inCert|
     end
 }
 
-$stderr.puts "found "+certificatesArray.count.to_s+" certificates"
+#$stderr.puts "found "+certificatesArray.count.to_s+" certificates"
 
 #if we don't have a dev_id, then we just return the matched certificates and
 #exit
 if (dev_id==nil) 
     matchingArray=find_matching_identities(certificateSubjects)
-    puts matchingArray.uniq.join("\n") 
+    #puts matchingArray.uniq.join("\n") 
     exit
 end
 
 #check to make sure the app passed in really exists
 throw "file #{app_path} does not exist" if !File.exists? app_path
 
+
+#verify existing signature
+#sig_results = system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --verify --deep -vvv -s \"iPhone Distribution: Mallinckrodt, Inc.\" ")
+#$stderr.puts sig_results
+
 #the plist is most likely in binary format, so we change to text
 #otherwise the plist library fails
 info_plist_path="#{app_path}/Info.plist"
-$stderr.puts "   Converting Info.plist from binary to text..."
+#$stderr.puts "   Converting Info.plist from binary to text..."
 system("plutil -convert xml1 \"#{info_plist_path}\"")
 
 #Read in the plist file, put into an array. We then save it out with help from the plist library.
@@ -170,16 +175,14 @@ def new_version_number(version_number)
   if version_number.nil? then return version_number end
 	
   version_parts = version_number.split(".")
+  if version_parts.length == 2 then
+  	# add a bugfix number portion to the version_number
+  	version_parts[2]= 0
+  end
   version_parts[version_parts.length-1] = (version_parts.last.to_i + 1).to_s
   version_parts.join(".")
 end
 
-info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
-
-if info_plist.has_key?('CFBundleShortVersionString') then
-	info_plist['CFBundleShortVersionString'] = new_version_number(info_plist['CFBundleShortVersionString'])
-	$stderr.puts "   Updating Info.plist with new bundle version of #{info_plist['CFBundleShortVersionString']}..."
-end
 
 #change bundle id to match provisioning profile
 #TODO: actually lookup the provisioning profile bundle id
@@ -188,29 +191,74 @@ new_CFBundleIdentifier = "com.mallinckrodt." + original_CFBundleIdentifier.split
 if original_CFBundleIdentifier != new_CFBundleIdentifier then
   $stderr.puts "  Updating CFBundleIdentifier from #{original_CFBundleIdentifier} to #{new_CFBundleIdentifier}..."
   info_plist['CFBundleIdentifier'] = new_CFBundleIdentifier
+  $stderr.puts "    Version numbers unchanged at #{info_plist['CFBundleShortVersionString']} and #{info_plist['CFBundleVersion']}"
+else
+  # bump version number if we're resigning our own provisioned IPA
+  if info_plist.has_key?('CFBundleShortVersionString') then
+    $stderr.puts " Original CFBundleShortVersionString: #{info_plist['CFBundleShortVersionString']}"
+    $stderr.puts " Original CFBundleVersion: #{info_plist['CFBundleVersion']}"
+
+    info_plist['CFBundleShortVersionString'] = new_version_number(info_plist['CFBundleShortVersionString'])
+    info_plist['CFBundleVersion'] = new_version_number(info_plist['CFBundleVersion'])
+
+    $stderr.puts "   Updated Info.plist with new CFBundleShortVersionString of #{info_plist['CFBundleShortVersionString']} and CFBundleVersion of #{info_plist['CFBundleVersion']}..."
+  end
 end
 
-$stderr.puts "   Saving updated Info.plist and Entitlements to app bundle..."
+info_plist['CFBundleDisplayName'] = info_plist['CFBundleName'] if info_plist['CFBundleDisplayName'] == ""
+
+######## ENTITLEMENTS ########
+
+#Copy current
+entitlements_path = "#{app_path}/Entitlements.plist"
+if File.exists?(entitlements_path) then
+	#File.cp(entitlements_path, "/Users/mikejorgensen/Desktop/")
+	entitlements_file_data=File.read(entitlements_path)
+	entitlements_plist=Plist::parse_xml(entitlements_file_data)
+	$stderr.puts("Original application-identifier: #{entitlements_plist["application-identifier"]}")
+else
+	$stderr.puts("No original Entitlements.plist")
+end
+
+
+#App store: 48R29Y2GN7
+#Enterprise: 5MAHELGYCK
+#  entitlements["application-identifier"] = "5MAHELGYCK.#{new_CFBundleIdentifier}"
+  entitlements["application-identifier"] = "5MAHELGYCK.com.mallinckrodt.*"
+#  entitlements["application-identifier"] = entitlements_plist["application-identifier"]
+#  puts "*******NEW application-identifier*******"
+#  puts entitlements["application-identifier"]
+  
+  #if !entitlements.has_key?('previous-application-identifiers') then
+  	#entitlements['previous-application-identifiers'] =  ['5MAHELGYCK.com.mallinckrodt.*']
+  	#<key>previous-application-identifiers</key>
+    #<array>
+    #    <string>{Your Old App ID Prefix}.YourApp.Bundle.ID</string>
+    #</array>
+  #end
+
+#$stderr.puts "   Saving updated Info.plist and Entitlements to app bundle..."
 info_plist.save_plist info_plist_path
 entitlements.save_plist("#{app_path}/Entitlements.plist")
 
 #Dump the old embedded.mobileprovision and copy in the one provided
-$stderr.puts "   Removing the prior embedded.mobileprovision..."
+#$stderr.puts "   Removing the prior embedded.mobileprovision..."
 File.unlink("#{app_path}/embedded.mobileprovision") if File.exists? "#{app_path}/embedded.mobileprovision"
 
-$stderr.puts "   Moving provisioning profile into app..."
+#$stderr.puts "   Moving provisioning profile into app..."
 File.copy(prov_profile_path,"#{app_path}/embedded.mobileprovision")
 
 #now we sign the whole she-bang using the info provided
-$stderr.puts "running /usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\""
+#$stderr.puts "running /usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\""
 result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\"")
+#result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\"")
 
-$stderr.puts "codesigning returned #{result}"
+#$stderr.puts "codesigning returned #{result}"
 throw "Codesigning failed" if result==false
 
 app_folder=Pathname.new(app_path).dirname.to_s
 newFolder="#{app_folder}/#{app_name.gsub(".ipa", "")}"
-$stderr.puts newFolder
+#$stderr.puts newFolder
 
 #we add the .app into a Payload folder and then zip it 
 #up with the extension .ipa so it can easiy be added to iTunes
@@ -230,7 +278,8 @@ File.move(app_path,"#{newFolder}/Payload")
 
 #zip it up.  zip is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
-system("pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
+#$stderr.puts "pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload"
+system("pushd \"#{newFolder}\" > /dev/null && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload > /dev/null")
 
 #extract icons
 iPad = info_plist.has_key?('CFBundleIcons~ipad')
@@ -241,21 +290,21 @@ elsif iPad then
 	iPad_string = '~ipad' 
 end
 
-info_plist["CFBundleIcons#{iPad_string}"]['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
-	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png" #this .png might not be necessary in all cases...what to do?
-	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png" #ditto, might not need to add.png
+#info_plist["CFBundleIcons#{iPad_string}"]['CFBundlePrimaryIcon']['CFBundleIconFiles'].each{|file|
+#	full_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}#{iPad_string}.png" #this .png might not be necessary in all cases...what to do?
+#	shorter_path= "#{newFolder}/Payload/#{Pathname.new(app_path).basename}/#{file}.png" #ditto, might not need to add.png
 
-	if File.exists?(full_path) then
-		File.cp("#{full_path}", "#{newFolder}")
-	elsif File.exists?(shorter_path) then
-		File.cp("#{shorter_path}", "#{newFolder}")
-	else
-		puts "File #{file} could not be found using #{full_path} or #{shorter_path}"
-		#File.cp("#{file}*", "#{newFolder}")
-		Dir.glob("#{newFolder}/Payload/#{Pathname.new(app_path).basename}/*#{file}*").each{ |file|
-			File.cp(file, "#{newFolder}")
-		}
-	end
-}
+#	if File.exists?(full_path) then
+#		File.cp("#{full_path}", "#{newFolder}")
+#	elsif File.exists?(shorter_path) then
+#		File.cp("#{shorter_path}", "#{newFolder}")
+#	else
+#		#puts "File #{file} could not be found using #{full_path} or #{shorter_path}"
+#		#File.cp("#{file}*", "#{newFolder}")
+#		Dir.glob("#{newFolder}/Payload/#{Pathname.new(app_path).basename}/*#{file}*").each{ |file|
+#			File.cp(file, "#{newFolder}")
+#		}
+#	end
+#}
 
-system("pushd \"#{newFolder}\" && rm -rf Payload")
+system("pushd \"#{newFolder}\" > /dev/null && rm -rf Payload")
