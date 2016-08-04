@@ -207,9 +207,6 @@ end
 original_CFBundleIdentifier = info_plist['CFBundleIdentifier']
 new_CFBundleIdentifier = original_CFBundleIdentifier
 
-# bump version number if we're resigning our own provisioned IPA
-changeVersion = original_CFBundleIdentifier == new_CFBundleIdentifier
-
 if changeBundleIdentifier then
 	new_CFBundleIdentifier = "com.mallinckrodt." + original_CFBundleIdentifier.split(".").last
 #	if original_CFBundleIdentifier != new_CFBundleIdentifier then
@@ -218,6 +215,9 @@ if changeBundleIdentifier then
 	  $stderr.puts "    Version numbers unchanged at #{info_plist['CFBundleShortVersionString'] if info_plist.has_key?('CFBundleShortVersionString')} and #{info_plist['CFBundleVersion']}"
 #	else
 end
+
+# bump version number if we're resigning our own provisioned IPA
+changeVersion = original_CFBundleIdentifier == new_CFBundleIdentifier
 
 if changeVersion then
 	if info_plist.has_key?('CFBundleVersion') then
