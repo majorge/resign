@@ -260,8 +260,11 @@ when "clearskymnk", "Quality-Cost", "WBNR-GenSurg", "WBNR-Ortho", "Covidien-2011
   entitlements["application-identifier"] = "5MAHELGYCK.#{new_CFBundleIdentifier}"
 when "insightsqa"
   entitlements["application-identifier"] = "3TUHX7J448.com.mallinckrodt.insightsqa"
+  prov_profile_path = "../Insights_QA_Distribution.mobileprovision"
 when "dosingcalc"
   entitlements["application-identifier"] = "AXR84CXC3P.#{new_CFBundleIdentifier}"
+when "attendify"
+  entitlements["application-identifier"] = "3TUHX7J448.com.mallinckrodt.attendify"
 else
   entitlements["application-identifier"] = "5MAHELGYCK.com.mallinckrodt.*"
 end

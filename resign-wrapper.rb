@@ -1,5 +1,9 @@
 require 'optparse'
 
+def to_boolean(s)
+  !!(s =~ /^(true|t|yes|y|1)$/i)
+end
+
 options = {}
 
 optparse = OptionParser.new do |opts|
@@ -14,6 +18,9 @@ optparse = OptionParser.new do |opts|
   opts.on("-D", "--developerid [developer id]", "something like iPhone Distribution: company name") do |i|
     options[:developerid] = i
   end
+  opts.on("-c", "--change_bundle_identifier [true or false]", "False if the original CFBundleIdentifier should be retained") do |c|
+    options[:change_bundle_identifer] = to_boolean(c)
+  end	
 end.parse!
 
 begin                                                                                                                                                                                                             
@@ -36,13 +43,15 @@ dir = File.expand_path(options[:directory])
 apps = Dir.foreach(dir) do |file|
   next if not file =~ /.*\.ipa/i
 
-  system("\"#{script_path}/unar\" -force-overwrite \"#{dir}/#{file}\" > /dev/null")
+  system("\"#{script_path}/unar\" -force-overwrite \"#{dir}/#{file}\" > /dev/null ")
 
   Dir.glob("Payload/*.app") do |i|
-    system("\"#{script_path}/resign.rb\" --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\"")
+	system("\"#{script_path}/resign.rb\" --prov_profile_path \"#{options[:prov_profile_path]}\" --app_path \"#{File.expand_path(i)}\" --app_name \"#{file}\" --developerid \"#{options[:developerid]}\" --change_bundle_identifier \"#{options[:change_bundle_identifer].to_s}\"")
+ end
+ 
+ Dir.glob("Payload/*.app") do |p|
+   system("rm -rf \"#{File.expand_path(p)}\"")
   end
-  
-  Dir.glob("Payload/*.app") do |p|
-    system("rm -rf \"#{File.expand_path(p)}\"")
-  end
+
+
 end
