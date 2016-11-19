@@ -244,6 +244,7 @@ info_plist.save_plist info_plist_path
 #Copy current
 entitlements_path = "#{app_path}/Entitlements.plist"
 if File.exists?(entitlements_path) then
+	system("plutil -convert xml1 '#{entitlements_path}'")
 	entitlements_file_data=File.read(entitlements_path)
 	entitlements_plist=Plist::parse_xml(entitlements_file_data)
 	$stderr.puts("Original application-identifier: #{entitlements_plist["application-identifier"]}")
@@ -282,12 +283,19 @@ File.unlink("#{app_path}/embedded.mobileprovision") if File.exists? "#{app_path}
 #$stderr.puts "   Moving provisioning profile into app..."
 FileUtils.copy(prov_profile_path,"#{app_path}/embedded.mobileprovision")
 
+#sign frameworks too
+Dir.glob("#{app_path}/Frameworks/*") do |f|
+	puts f
+	result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{f}\" ")
+end
+
 #now we sign the whole she-bang using the info provided
 #$stderr.puts "running /usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\""
-result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\"")
+result=system("/usr/bin/codesign -f -s \"#{dev_id}\" \"#{app_path}\" --entitlements=\"#{app_path}/Entitlements.plist\" --deep")
 
 #$stderr.puts "codesigning returned #{result}"
 throw "Codesigning failed" if result==false
+
 
 app_folder=Pathname.new(app_path).dirname.to_s
 newFolder="#{app_folder}/#{app_name.to_s.gsub(".ipa", "")}"
@@ -309,13 +317,13 @@ Dir.mkdir(newFolder)
 Dir.mkdir("#{newFolder}/Payload")
 FileUtils.move(app_path,"#{newFolder}/Payload")
 
-#zip it up.  zip is a bit strange in that you have to actually be in the 
+#zip it up.   is a bit strange in that you have to actually be in the 
 #folder otherwise it puts the entire tree (though empty) in the zip.
 #$stderr.puts "pushd \"#{newFolder}\" && /usr/bin/zip -r \"#{info_plist['CFBundleName']}-#{info_plist['CFBundleShortVersionString']} (#{info_plist['CFBundleIdentifier']})\.ipa\" Payload"
 
 #puts '"pushd \"#{newFolder}\"  && /usr/bin/zip -r \"#{info_plist["CFBundleDisplayName"].to_s.force_encoding("UTF-8").gsub("/","")}-#{info_plist["CFBundleShortVersionString"].to_s.force_encoding("UTF-8")} (#{info_plist["CFBundleIdentifier"].to_s.force_encoding("UTF-8").gsub("/","")})\.ipa\" Payload "'
 
-system("pushd \"#{newFolder.to_s.force_encoding("UTF-8")}\"  && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName'].to_s.force_encoding("UTF-8").gsub("/","")}-#{info_plist['CFBundleShortVersionString'].to_s.force_encoding("UTF-8")} (#{info_plist['CFBundleIdentifier'].to_s.force_encoding("UTF-8").gsub("/","")})\.ipa\" Payload ")
+system("pushd \"#{newFolder.to_s.force_encoding("UTF-8")}\"  && /usr/bin/zip -r \"#{info_plist['CFBundleDisplayName'].to_s.force_encoding("UTF-8").gsub("/","")}-#{info_plist['CFBundleShortVersionString'].to_s.force_encoding("UTF-8")} (#{info_plist['CFBundleIdentifier'].to_s.force_encoding("UTF-8").gsub("/","")})\.ipa\" Payload >/dev/null")
 
 # clean up working Payload directory and move new IPA to publish location
 #system("pushd \"#{newFolder}\" > /dev/null && rm -rf Payload")
