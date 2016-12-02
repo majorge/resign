@@ -329,3 +329,4 @@ system("pushd \"#{newFolder.to_s.force_encoding("UTF-8")}\"  && /usr/bin/zip -r 
 #system("pushd \"#{newFolder}\" > /dev/null && rm -rf Payload")
 system("pushd \"#{newFolder}\" && rm -rf Payload")
 system ("mv -f \"#{newFolder}\" /Users/mikejorgensen/Public/signed")
+system ("chmod -R 775 /Users/mikejorgensen/Public/signed")
