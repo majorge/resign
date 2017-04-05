@@ -257,11 +257,11 @@ end
 #Enterprise: 5MAHELGYCK
 #  entitlements["application-identifier"] = "5MAHELGYCK.#{new_CFBundleIdentifier}"
 case original_CFBundleIdentifier.split(".").last
-when "clearskymnk", "Quality-Cost", "WBNR-GenSurg", "WBNR-Ortho", "Covidien-2011-SNM-iPad-Application"
+when "clearskymnk", "Quality-Cost", "WBNR-GenSurg", "WBNR-Ortho", "Covidien-2011-SNM-iPad-Application", "kol-videos", "p2p-vidoes", "jills-story", "b-step"
   entitlements["application-identifier"] = "5MAHELGYCK.#{new_CFBundleIdentifier}"
 when "insightsqa"
   entitlements["application-identifier"] = "3TUHX7J448.com.mallinckrodt.insightsqa"
-  prov_profile_path = "../Insights_QA_Distribution.mobileprovision"
+  prov_profile_path = "../Insights_QA_Distribution_20172018.mobileprovision"
 when "dosingcalc"
   entitlements["application-identifier"] = "AXR84CXC3P.#{new_CFBundleIdentifier}"
 when "attendify"
