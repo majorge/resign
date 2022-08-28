@@ -3,3 +3,5 @@ Resign apps using a combination of unarchive CLI (unar), resign Ruby script from
    ruby resign.rb -p Exalgo.mobileprovision  -a foobar.app  -d "iPhone Distribution: YOURACCOUNT, Inc." -n foobar.ipa
 
 Make sure Xcode Command Line Tools are installed on the machine you're resigning from. If not errors like "object file format unrecognized, invalid or unsuitable" will appear.
+
+(test with 1Password key)
